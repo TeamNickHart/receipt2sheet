@@ -1,0 +1,71 @@
+# receipt2sheet configuration
+
+version: 1
+
+# Your properties
+properties:
+  - id: my-property
+    name: "My Rental Property"
+    location: "City, State"
+    type: short-term-rental    # short-term-rental | long-term-rental
+    placed_in_service: 2026-01  # When rental activity began
+
+# Default property when not specified
+default_property: my-property
+
+# Spreadsheet locations (relative to this file)
+spreadsheets:
+  operating_expenses: "spreadsheets/Operating_Expenses_{year}.xlsx"
+  capital_improvements: "spreadsheets/Capital_Improvements.xlsx"
+  year_end_summary: "spreadsheets/Year_End_Summary_{year}.xlsx"
+
+# Schedule E categories (IRS standard)
+categories:
+  - Advertising
+  - Auto and travel
+  - Cleaning and maintenance
+  - Commissions
+  - Insurance
+  - Legal and professional fees
+  - Management fees
+  - Mortgage interest
+  - Other interest
+  - Repairs
+  - Supplies
+  - Taxes
+  - Utilities
+  - Depreciation
+  - Other
+
+# Known vendors and their default categories
+# Tool learns new ones automatically
+vendors:
+  Amazon:
+    category: Supplies
+    aliases: ["AMAZON.COM", "AMZN"]
+  Costco:
+    category: Supplies
+    aliases: ["COSTCO WHOLESALE", "COSTCO.COM"]
+  Home Depot:
+    category: Supplies
+    aliases: ["THE HOME DEPOT"]
+  Lowes:
+    category: Supplies
+    aliases: ["LOWE'S"]
+  # Add your local vendors:
+  # "Local Plumber":
+  #   category: Repairs
+  # "Electric Company":
+  #   category: Utilities
+
+# Receipt organization
+inbox: "inbox/"
+processed: "processed/"
+organize_processed_by: "year-month"  # year-month | vendor | flat
+
+# Processing options
+options:
+  require_confirmation: true
+  auto_categorize_known_vendors: true
+  move_processed_receipts: true
+  backup_spreadsheets: true
