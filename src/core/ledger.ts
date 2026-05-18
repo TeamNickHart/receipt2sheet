@@ -11,6 +11,7 @@ export interface LedgerEntry {
     amount: number;
     description: string;
     category: string;
+    expenseType: string;
   };
   rawResponse: string;
   action: 'confirm' | 'skip';

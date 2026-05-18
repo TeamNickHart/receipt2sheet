@@ -18,12 +18,15 @@ export const CategorySchema = z.enum([
   'Other',
 ]);
 
+export const ExpenseTypeSchema = z.enum(['operating', 'capital']);
+
 export const ExpenseSchema = z.object({
   vendor: z.string().min(1),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   amount: z.number().nonnegative(),
   description: z.string(),
   category: CategorySchema,
+  expenseType: ExpenseTypeSchema.default('operating'),
   property: z.string().optional(),
   receiptPath: z.string().optional(),
 });

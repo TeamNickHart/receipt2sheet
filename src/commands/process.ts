@@ -8,7 +8,7 @@ import { appendExpense, backupSpreadsheet } from '../core/spreadsheet.js';
 import { confirmExpenses, type ParsedEntry } from '../core/confirm.js';
 import { loadLedger, saveLedger, isAlreadyProcessed } from '../core/ledger.js';
 import { listInboxFiles, isSupportedFile, ensureDir } from '../utils/files.js';
-import { currentYearMonth } from '../utils/dates.js';
+import { currentYear as getCurrentYear, currentYearMonth } from '../utils/dates.js';
 import type { Expense } from '../schemas/expense.js';
 
 interface ProcessOptions {
@@ -116,6 +116,7 @@ export async function processCommand(files: string[], options: ProcessOptions): 
       const property = options.property || config.default_property;
       const expense: Expense = {
         ...parseResult.parsed,
+        expenseType: parseResult.parsed.expense_type || 'operating',
         category: options.category
           ? (options.category as Expense['category'])
           : parseResult.parsed.category,
@@ -126,6 +127,8 @@ export async function processCommand(files: string[], options: ProcessOptions): 
       parsed.push({ file: filename, expense, rawResponse: parseResult.rawResponse });
       if (expense.amount === 0) {
         console.log(chalk.yellow('done (not an invoice? no amount found)'));
+      } else if (expense.expenseType === 'capital') {
+        console.log(chalk.green('done') + chalk.yellow(' [CAPITAL]'));
       } else {
         console.log(chalk.green('done'));
       }
@@ -211,36 +214,66 @@ export async function processCommand(files: string[], options: ProcessOptions): 
     return;
   }
 
-  // Group expenses by year for multi-year batches
-  const byYear = new Map<number, typeof toProcess>();
-  for (const entry of toProcess) {
-    const year = new Date(entry.expense.date).getFullYear();
-    if (!byYear.has(year)) byYear.set(year, []);
-    byYear.get(year)!.push(entry);
+  // Split into operating vs capital expenses
+  const operatingExpenses = toProcess.filter((e) => e.expense.expenseType !== 'capital');
+  const capitalExpenses = toProcess.filter((e) => e.expense.expenseType === 'capital');
+
+  // Handle operating expenses — group by year
+  if (operatingExpenses.length > 0) {
+    const byYear = new Map<number, typeof operatingExpenses>();
+    for (const entry of operatingExpenses) {
+      const year = new Date(entry.expense.date).getFullYear();
+      if (!byYear.has(year)) byYear.set(year, []);
+      byYear.get(year)!.push(entry);
+    }
+
+    for (const [year, entries] of byYear) {
+      const spreadsheetPath = resolveSpreadsheetPath(
+        configDir,
+        config.spreadsheets.operating_expenses,
+        year,
+      );
+
+      if (config.options.backup_spreadsheets) {
+        const backupPath = await backupSpreadsheet(spreadsheetPath);
+        if (backupPath) {
+          console.log(chalk.dim(`Backed up spreadsheet to ${path.basename(backupPath)}`));
+        }
+      }
+
+      for (const entry of entries) {
+        await appendExpense(spreadsheetPath, entry.expense);
+      }
+
+      console.log(
+        chalk.green(`Added ${entries.length} expense(s) to ${path.basename(spreadsheetPath)}`),
+      );
+    }
   }
 
-  // Update spreadsheets per year
-  for (const [year, entries] of byYear) {
-    const spreadsheetPath = resolveSpreadsheetPath(
+  // Handle capital expenses — all go to Capital_Improvements.xlsx
+  if (capitalExpenses.length > 0) {
+    const capitalPath = resolveSpreadsheetPath(
       configDir,
-      config.spreadsheets.operating_expenses,
-      year,
+      config.spreadsheets.capital_improvements,
+      getCurrentYear(),
     );
 
-    // Backup if enabled
     if (config.options.backup_spreadsheets) {
-      const backupPath = await backupSpreadsheet(spreadsheetPath);
+      const backupPath = await backupSpreadsheet(capitalPath);
       if (backupPath) {
         console.log(chalk.dim(`Backed up spreadsheet to ${path.basename(backupPath)}`));
       }
     }
 
-    for (const entry of entries) {
-      await appendExpense(spreadsheetPath, entry.expense);
+    for (const entry of capitalExpenses) {
+      await appendExpense(capitalPath, entry.expense);
     }
 
     console.log(
-      chalk.green(`Added ${entries.length} expense(s) to ${path.basename(spreadsheetPath)}`),
+      chalk.green(
+        `Added ${capitalExpenses.length} capital expense(s) to ${path.basename(capitalPath)}`,
+      ),
     );
   }
 
@@ -274,6 +307,7 @@ export async function processCommand(files: string[], options: ProcessOptions): 
           amount: entry.expense.amount,
           description: entry.expense.description,
           category: entry.expense.category,
+          expenseType: entry.expense.expenseType,
         },
         rawResponse: entry.rawResponse || '',
         action: 'confirm',
@@ -295,6 +329,7 @@ export async function processCommand(files: string[], options: ProcessOptions): 
         amount: entry.expense.amount,
         description: entry.expense.description,
         category: entry.expense.category,
+        expenseType: entry.expense.expenseType,
       },
       rawResponse: (entry as ParsedEntry & { rawResponse?: string }).rawResponse || '',
       action: 'skip',

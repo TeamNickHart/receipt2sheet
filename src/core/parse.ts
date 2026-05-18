@@ -43,11 +43,17 @@ Given a receipt or invoice (as text, image, or PDF), extract:
   - Taxes
   - Utilities
   - Other
+- expense_type: Either "operating" or "capital"
+  - "operating": Regular expenses (supplies, repairs, utilities, cleaning, etc.)
+  - "capital": Major purchases that add value and get depreciated over time.
+    Examples: appliances, hot tubs, furniture sets, renovations, HVAC systems, roofing.
+    Rule of thumb: if it's a significant asset with a useful life beyond one year, it's capital.
 
 Respond with JSON only, no markdown, no explanation.
 
-Example response:
-{"vendor":"Amazon","date":"2026-05-12","amount":45.99,"description":"Replacement towels and sheets","category":"Supplies"}`;
+Example responses:
+{"vendor":"Amazon","date":"2026-05-12","amount":45.99,"description":"Replacement towels and sheets","category":"Supplies","expense_type":"operating"}
+{"vendor":"Aqua Quip","date":"2025-05-26","amount":8350.73,"description":"Hot tub purchase and installation","category":"Other","expense_type":"capital"}`;
 
 export type ReceiptContent =
   | { type: 'text'; text: string }
