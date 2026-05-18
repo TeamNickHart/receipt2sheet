@@ -13,6 +13,38 @@ Process receipts and invoices for rental property expense tracking.
 
 This skill supports the `r2s` CLI tool, but also works standalone when users share receipts directly in chat.
 
+## Sensitive Data Handling
+
+**CRITICAL:** Financial documents may contain sensitive information. Follow these rules strictly.
+
+### Never extract, display, or include in output:
+
+| Data Type | Rule |
+|-----------|------|
+| Credit card numbers | Show last 4 only: `****-****-****-1234` |
+| Bank account numbers | Show last 4 only: `****5678` |
+| Social Security Numbers | Never show — redact completely |
+| Routing numbers | Never show — redact completely |
+| Driver's license / ID numbers | Never show — redact completely |
+
+### When you see sensitive data:
+
+1. **Acknowledge it exists** — "Receipt shows payment ending in 1234"
+2. **Do NOT repeat the full number** — Ever
+3. **Extract only what's needed** — Vendor, date, amount, description
+
+### Examples:
+
+```
+❌ WRONG: "Paid with Visa 4532-1234-5678-9012"
+✅ RIGHT: "Paid with Visa ending in 9012"
+
+❌ WRONG: "Bank account 12345678901234"
+✅ RIGHT: "Payment method on file"
+```
+
+When uncertain if something is sensitive, err on the side of redaction.
+
 ## Receipt Parsing
 
 When given a receipt (image or PDF text), extract:

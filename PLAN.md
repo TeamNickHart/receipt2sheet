@@ -260,6 +260,7 @@ receipt2sheet/
 │   ├── core/
 │   │   ├── config.ts            # Load/save r2s.yaml
 │   │   ├── extract.ts           # PDF text extraction
+│   │   ├── redact.ts            # Sensitive data redaction (runs before API)
 │   │   ├── parse.ts             # Claude API integration
 │   │   ├── spreadsheet.ts       # Read/write xlsx files
 │   │   └── confirm.ts           # Interactive confirmation UI
@@ -441,6 +442,89 @@ export const ExpenseSchema = z.object({
 });
 
 export type Expense = z.infer<typeof ExpenseSchema>;
+```
+
+### Sensitive Data Redaction (src/core/redact.ts)
+
+**CRITICAL:** This runs BEFORE any API call. Sensitive data never leaves the user's machine.
+
+```typescript
+/**
+ * Patterns for sensitive financial data
+ */
+const REDACTION_PATTERNS = [
+  // Credit card numbers (preserve last 4)
+  {
+    pattern: /\b(\d{4})[\s-]?(\d{4})[\s-]?(\d{4})[\s-]?(\d{4})\b/g,
+    replacement: '****-****-****-$4',
+    name: 'credit_card',
+  },
+  // Bank account numbers (8-17 digits, preserve last 4)
+  {
+    pattern: /\b(\d{4})(\d{4,13})\b/g,
+    replacement: (match: string) => '****' + match.slice(-4),
+    name: 'bank_account',
+  },
+  // Social Security Numbers (redact completely)
+  {
+    pattern: /\b\d{3}-\d{2}-\d{4}\b/g,
+    replacement: '***-**-****',
+    name: 'ssn',
+  },
+  // Routing numbers (9 digits, redact completely)
+  {
+    pattern: /\b\d{9}\b/g,
+    replacement: '*********',
+    name: 'routing',
+  },
+];
+
+export interface RedactionResult {
+  text: string;
+  redactions: Array<{
+    type: string;
+    original: string;
+    replacement: string;
+    position: number;
+  }>;
+}
+
+export function redactSensitiveData(text: string): RedactionResult {
+  const redactions: RedactionResult['redactions'] = [];
+  let result = text;
+
+  for (const { pattern, replacement, name } of REDACTION_PATTERNS) {
+    result = result.replace(pattern, (match, ...args) => {
+      const position = args[args.length - 2]; // Second-to-last arg is offset
+      const replaced = typeof replacement === 'function' 
+        ? replacement(match) 
+        : match.replace(pattern, replacement);
+      
+      redactions.push({
+        type: name,
+        original: match.slice(0, 4) + '...' + match.slice(-4), // Log safely
+        replacement: replaced,
+        position,
+      });
+      
+      return replaced;
+    });
+  }
+
+  return { text: result, redactions };
+}
+
+/**
+ * Log redactions for user awareness (without exposing full numbers)
+ */
+export function logRedactions(redactions: RedactionResult['redactions']): void {
+  if (redactions.length === 0) return;
+  
+  console.log(chalk.yellow(`⚠ Redacted ${redactions.length} sensitive item(s):`));
+  for (const r of redactions) {
+    console.log(chalk.gray(`  - ${r.type}: ${r.replacement}`));
+  }
+}
 ```
 
 ### Spreadsheet Updates (src/core/spreadsheet.ts)
@@ -648,9 +732,11 @@ Tax filing helper:
 - [ ] `init` command - creates config and template spreadsheets
 - [ ] `process` command - parse receipts, confirm, update spreadsheet
 - [ ] PDF text extraction
+- [ ] **Sensitive data redaction** - scrub CC/bank numbers before API calls
 - [ ] Claude API integration
 - [ ] Zod validation
 - [ ] Basic xlsx writing
+- [ ] `--dry-run` flag to preview what would be sent
 
 ### Phase 2: Polish
 - [ ] Vision fallback for scanned receipts

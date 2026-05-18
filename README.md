@@ -1,5 +1,10 @@
 # receipt2sheet
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Node](https://img.shields.io/badge/Node-20+-green?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
+
 > v0.1.0
 
 Turn rental receipts into Schedule E line items using Claude AI.
@@ -38,6 +43,16 @@ Processing 4 receipt(s)...
 - **No SaaS** — Your data stays local; just pay Claude API costs (~$2/month)
 - **Works with your spreadsheets** — Updates xlsx files you can open in Excel, Numbers, or Google Sheets
 - **Learns your vendors** — Remembers that "Peninsula Light" is always Utilities
+
+## Privacy & Security
+
+Your financial data is sensitive. We treat it that way.
+
+- **All spreadsheets stay local** — Nothing synced to the cloud
+- **No telemetry** — Zero analytics, tracking, or phone-home
+- **Open source** — Audit the code yourself
+
+See **[PRIVACY.md](./PRIVACY.md)** for full details on what data goes where.
 
 ## Install
 
@@ -139,6 +154,16 @@ ANTHROPIC_API_KEY=sk-ant-your-key-here
 # R2S_MAX_FILE_SIZE_MB=10
 ```
 
+## Multi-Property Support
+
+Track multiple rentals with one tool:
+
+```bash
+r2s process --property cabin
+r2s process --property condo
+r2s status --property all
+```
+
 ## How It Works
 
 1. **Text extraction** — Pulls text from PDFs; sends scanned PDFs directly to Claude as documents
@@ -159,12 +184,17 @@ Claude API usage is minimal:
 - ~$0.05–0.15 per receipt (PDF document or image vision)
 - Typical month: **$1–3** for 50 receipts
 
+## Contributing
+
+Contributions are welcome! Please read the [PLAN.md](./PLAN.md) for architecture details and implementation status.
+
 ## License
 
-MIT
+[MIT](./LICENSE)
 
-## See Also
+## Documentation
 
-- [PLAN.md](./PLAN.md) — Detailed implementation spec
-- [ROADMAP.md](./ROADMAP.md) — What's next
-- [SKILL.md](./SKILL.md) — For Claude Code/Desktop users
+- **[PRIVACY.md](./PRIVACY.md)** — Privacy policy and security details
+- **[PLAN.md](./PLAN.md)** — Detailed implementation spec
+- **[ROADMAP.md](./ROADMAP.md)** — What's next
+- **[SKILL.md](./SKILL.md)** — For Claude Code/Desktop users
