@@ -42,7 +42,7 @@ Processing 4 receipt(s)...
 - **Capital vs Operating** — Automatically routes major purchases to Capital Improvements
 - **No SaaS** — Your data stays local; just pay Claude API costs (~$2/month)
 - **Works with your spreadsheets** — Updates xlsx files you can open in Excel, Numbers, or Google Sheets
-- **Learns your vendors** — Remembers that "Peninsula Light" is always Utilities
+- **Vendor hints** — Configure known vendors in `r2s.yaml` to guide Claude's categorization
 
 ## Privacy & Security
 

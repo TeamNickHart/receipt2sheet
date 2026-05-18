@@ -4,11 +4,10 @@ receipt2sheet is designed with privacy as a core principle. Your financial data 
 
 ## TL;DR
 
-- ✅ All spreadsheets stay on your machine
-- ✅ Credit card and bank numbers are auto-redacted before API calls
-- ✅ No analytics, telemetry, or cloud sync
-- ✅ Anthropic API calls are not used for AI training
-- ✅ Open source — audit the code yourself
+- All spreadsheets stay on your machine
+- No analytics, telemetry, or cloud sync
+- Anthropic API calls are not used for AI training
+- Open source — audit the code yourself
 
 ---
 
@@ -21,50 +20,24 @@ receipt2sheet is designed with privacy as a core principle. Your financial data 
 | Your spreadsheets | `spreadsheets/*.xlsx` |
 | Your configuration | `r2s.yaml` |
 | Processed receipts | `processed/` folder |
-| Vendor mappings | `.r2s/vendor-cache.json` |
+| Processing ledger | `.r2s/processed.json` |
 
 ### Sent to Claude API (for parsing only)
 
 | Data | Purpose |
 |------|---------|
-| Receipt text | Extracted from PDFs, with sensitive data redacted |
-| Receipt images | Only when text extraction fails (scanned docs) |
+| Receipt text | Extracted from PDFs, sent as-is for parsing |
+| Scanned PDFs | Sent as native PDF documents when text extraction fails |
+| Receipt images | PNG/JPG/WebP files sent via vision API |
 
 ### Never sent anywhere
 
 | Data | Why it's protected |
 |------|-------------------|
-| Full credit card numbers | Auto-redacted to `****-****-****-1234` |
-| Bank account numbers | Auto-redacted to `****5678` |
-| Social Security Numbers | Auto-redacted completely |
-| Routing numbers | Auto-redacted completely |
 | Your spreadsheet contents | Never leaves your machine |
 | Historical expenses | Never leaves your machine |
 
----
-
-## Automatic Redaction
-
-Before any text is sent to the Claude API, receipt2sheet automatically redacts sensitive patterns:
-
-```
-Credit Card:    4532-1234-5678-9012  →  ****-****-****-9012
-Bank Account:   12345678901234       →  ****1234
-SSN:            123-45-6789          →  ***-**-****
-Routing:        021000021            →  *********
-```
-
-This happens **before** the API call — sensitive data never leaves your machine in its original form.
-
-### Verify with dry-run
-
-You can see exactly what would be sent without making any API calls:
-
-```bash
-r2s process --dry-run
-```
-
-This shows the redacted text that would be transmitted, so you can verify nothing sensitive is included.
+> **Planned:** Automatic redaction of credit card numbers, bank accounts, SSNs, and routing numbers before API calls is on the [roadmap](./ROADMAP.md) for a future release. In v0.1.0, receipt text is sent to the Claude API without redaction.
 
 ---
 
@@ -86,21 +59,21 @@ Your `ANTHROPIC_API_KEY` is stored as an environment variable on your machine. I
 
 ---
 
-## Local-Only Mode (Future)
+## Local-Only Mode (Planned)
 
 For users who want zero external transmission, we plan to add a local-only mode that uses regex-based extraction without any API calls. It will be less accurate but fully private.
 
-Track this feature: [GitHub Issue #TBD]
+Track this feature on the [roadmap](./ROADMAP.md).
 
 ---
 
 ## What We Don't Do
 
-❌ **No analytics** — We don't track usage, errors, or behavior  
-❌ **No telemetry** — No phone-home, no crash reporting  
-❌ **No cloud sync** — Your files stay on your machine  
-❌ **No accounts** — No sign-up, no login, no user database  
-❌ **No ads** — This is a tool, not a business  
+- **No analytics** — We don't track usage, errors, or behavior
+- **No telemetry** — No phone-home, no crash reporting
+- **No cloud sync** — Your files stay on your machine
+- **No accounts** — No sign-up, no login, no user database
+- **No ads** — This is a tool, not a business
 
 ---
 
@@ -109,11 +82,7 @@ Track this feature: [GitHub Issue #TBD]
 This project is fully open source under the [MIT License](./LICENSE). You can:
 
 - **Read the code** — See exactly what data is transmitted
-- **Audit the redaction logic** — Verify sensitive data is scrubbed
 - **Fork and modify** — Add your own privacy controls
-- **Run offline** — Use local-only mode (when available)
-
-The redaction logic is in [`src/core/redact.ts`](./src/core/redact.ts) — we encourage you to review it.
 
 ---
 
@@ -131,4 +100,4 @@ We take security seriously and will respond promptly.
 
 ## Questions?
 
-If you have privacy or security concerns not addressed here, please [open a discussion](https://github.com/yourusername/receipt2sheet/discussions) on GitHub.
+If you have privacy or security concerns not addressed here, please [open a discussion](https://github.com/TeamNickHart/receipt2sheet/discussions) on GitHub.
