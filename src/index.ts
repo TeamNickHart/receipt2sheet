@@ -6,13 +6,14 @@ import { Command } from 'commander';
 import { initCommand } from './commands/init.js';
 import { processCommand } from './commands/process.js';
 import { doctorCommand } from './commands/doctor.js';
+import { VERSION } from './version.js';
 
 const program = new Command();
 
 program
   .name('r2s')
   .description('Process receipts into organized expense spreadsheets using Claude AI')
-  .version('0.1.0');
+  .version(VERSION);
 
 program
   .command('init')
