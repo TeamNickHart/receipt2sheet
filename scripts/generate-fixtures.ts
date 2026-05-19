@@ -547,6 +547,68 @@ async function generateEmptyPdf(): Promise<void> {
   console.log(`  ${filename} (${buf.length} bytes)`);
 }
 
+/**
+ * Fixture 9: Receipt with embedded PII for redaction testing
+ * Has: full CC number, SSN, routing number, account number — all fake
+ * Also has legitimate numbers that should NOT be redacted
+ */
+async function generatePiiReceipt(): Promise<void> {
+  const buf = await pdfToBuffer((doc) => {
+    doc.fontSize(16).font('Helvetica-Bold').text('MOUNTAIN PLUMBING & HEATING');
+    doc.fontSize(9).font('Helvetica');
+    doc.text('847 Elk Valley Road, Silverton, CO 81433');
+    doc.text('Phone: (970) 555-0147');
+    doc.text('Tax ID: 84-1234567');
+    doc.moveDown();
+
+    doc.font('Helvetica-Bold').text('INVOICE');
+    doc.font('Helvetica');
+    doc.text('Invoice #: 01-0583921');
+    doc.text('Date: 03/15/2026');
+    doc.text('Customer ID: 4829103');
+    doc.text('Service Order: 2026-031587');
+    doc.moveDown();
+
+    doc.font('Helvetica-Bold').text('Bill To:');
+    doc.font('Helvetica');
+    doc.text('Jane Smith');
+    doc.text('456 Alpine Drive');
+    doc.text('Ouray, CO 81427-9725');
+    doc.moveDown();
+
+    doc.font('Helvetica-Bold').text('Description');
+    doc.font('Helvetica');
+    doc.text('Emergency water heater replacement — 50 gal Bradford White');
+    doc.text('  Parts: $1,247.00');
+    doc.text('  Labor (4 hrs @ $125/hr): $500.00');
+    doc.text('  Disposal fee: $75.00');
+    doc.moveDown();
+
+    doc.text('Subtotal: $1,822.00');
+    doc.text('Sales Tax (8.1%): $147.58');
+    doc.font('Helvetica-Bold').text('Total Due: $1,969.58');
+    doc.font('Helvetica');
+    doc.moveDown();
+
+    // PII section — this is what should get redacted
+    doc.font('Helvetica-Bold').text('Payment Information');
+    doc.font('Helvetica');
+    doc.text('Credit Card: 4532015112830366');
+    doc.text('Cardholder SSN: 287-65-4321');
+    doc.text('Routing: 021000021');
+    doc.text('Account: 9876543210');
+    doc.text('Approval Code: 847291');
+    doc.text('Transaction ID: 8392017456');
+    doc.moveDown();
+
+    doc.text('Thank you for your business!');
+  });
+
+  const filename = 'pii-plumbing-invoice.pdf';
+  fs.writeFileSync(path.join(FIXTURES_DIR, filename), buf);
+  console.log(`  ${filename} (${buf.length} bytes)`);
+}
+
 async function main() {
   console.log('Generating test fixtures...\n');
 
@@ -558,6 +620,7 @@ async function main() {
   generateMinimalPng('receipt-photo.png');
   generateMinimalJpg('receipt-photo.jpg');
   await generateEmptyPdf();
+  await generatePiiReceipt();
 
   console.log('\nDone! Fixtures written to test/fixtures/receipts/');
 }

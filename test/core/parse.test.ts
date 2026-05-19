@@ -92,6 +92,22 @@ describe('parseReceipt', () => {
     await expect(parseReceipt({ type: 'text', text: 'test' }, {})).rejects.toThrow();
   });
 
+  it('redacts credit card numbers from text before API call', async () => {
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'text', text: validResponse }],
+    });
+
+    await parseReceipt(
+      { type: 'text', text: 'Payment: Visa 4111111111111111\nTotal: $45.99' },
+      {},
+    );
+
+    const callArgs = mockCreate.mock.calls[0][0];
+    const textContent = callArgs.messages[0].content[0].text;
+    expect(textContent).toContain('[REDACTED-CC-1111]');
+    expect(textContent).not.toContain('4111111111111111');
+  });
+
   it('throws on Zod validation failure', async () => {
     mockCreate.mockResolvedValueOnce({
       content: [{ type: 'text', text: JSON.stringify({ vendor: '' }) }],

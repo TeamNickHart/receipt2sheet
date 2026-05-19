@@ -50,6 +50,7 @@ Processing 4 receipt(s)...
 Your financial data is sensitive. We treat it that way.
 
 - **All spreadsheets stay local** — Nothing synced to the cloud
+- **Automatic PII redaction** — Credit cards, SSNs, and bank details are scrubbed from text before API calls
 - **No telemetry** — Zero analytics, tracking, or phone-home
 - **Open source** — Audit the code yourself
 
