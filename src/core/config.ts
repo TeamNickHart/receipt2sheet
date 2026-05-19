@@ -51,3 +51,59 @@ export function resolveSpreadsheetPath(configDir: string, template: string, year
   const resolved = template.replace('{year}', String(year));
   return path.join(configDir, resolved);
 }
+
+/**
+ * Learn vendor→category mappings from confirmed expenses.
+ * Adds new vendors to config and updates categories if the user changed them during edit.
+ * Returns the list of vendor names that were newly added or updated.
+ */
+export function learnVendors(
+  config: Config,
+  expenses: Array<{ vendor: string; category: string }>,
+): string[] {
+  const vendors = config.vendors || {};
+  const changed: string[] = [];
+
+  for (const { vendor, category } of expenses) {
+    if (!vendor || !category) continue;
+
+    // Check if this vendor name matches an existing vendor (exact key match)
+    if (vendor in vendors) {
+      if (vendors[vendor].category !== category) {
+        vendors[vendor].category = category;
+        changed.push(vendor);
+      }
+      continue;
+    }
+
+    // Check if vendor name matches an existing alias
+    const aliasMatch = Object.entries(vendors).find(([, v]) =>
+      v.aliases?.some((a) => a.toLowerCase() === vendor.toLowerCase()),
+    );
+    if (aliasMatch) {
+      // Update the parent vendor's category if it changed
+      if (aliasMatch[1].category !== category) {
+        aliasMatch[1].category = category;
+        changed.push(aliasMatch[0]);
+      }
+      continue;
+    }
+
+    // Check if this vendor name matches an existing vendor key (case-insensitive)
+    const caseMatch = Object.keys(vendors).find((k) => k.toLowerCase() === vendor.toLowerCase());
+    if (caseMatch) {
+      if (vendors[caseMatch].category !== category) {
+        vendors[caseMatch].category = category;
+        changed.push(caseMatch);
+      }
+      continue;
+    }
+
+    // New vendor — add it
+    vendors[vendor] = { category };
+    changed.push(vendor);
+  }
+
+  config.vendors = vendors;
+  return changed;
+}

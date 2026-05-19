@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import chalk from 'chalk';
-import { loadConfig, resolveSpreadsheetPath } from '../core/config.js';
+import { loadConfig, resolveSpreadsheetPath, learnVendors, saveConfig } from '../core/config.js';
 import { extractText, readFileAsBase64, getMediaType } from '../core/extract.js';
 import { parseReceipt, type ParseResult } from '../core/parse.js';
 import { appendExpense, backupSpreadsheet } from '../core/spreadsheet.js';
@@ -358,6 +358,19 @@ export async function processCommand(files: string[], options: ProcessOptions): 
   }
 
   await saveLedger(configDir, ledger);
+
+  // Learn vendor→category mappings from confirmed expenses
+  if (config.options.auto_categorize_known_vendors) {
+    const confirmedExpenses = toProcess.map((e) => ({
+      vendor: e.expense.vendor,
+      category: e.expense.category,
+    }));
+    const learned = learnVendors(config, confirmedExpenses);
+    if (learned.length > 0) {
+      await saveConfig(config, configDir);
+      console.log(chalk.dim(`Learned ${learned.length} vendor(s): ${learned.join(', ')}`));
+    }
+  }
 
   if (skipped.length > 0) {
     console.log(chalk.dim(`Skipped ${skipped.length} receipt(s)`));
