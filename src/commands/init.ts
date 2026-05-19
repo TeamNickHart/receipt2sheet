@@ -3,7 +3,7 @@ import path from 'path';
 import { input, select, confirm } from '@inquirer/prompts';
 import chalk from 'chalk';
 import { fileURLToPath } from 'url';
-import { ensureDir, fileExists } from '../utils/files.js';
+import { ensureDir, fileExists, slugify } from '../utils/files.js';
 import { currentYear } from '../utils/dates.js';
 import { copyTemplate } from '../core/spreadsheet.js';
 
@@ -100,12 +100,6 @@ export async function initCommand(options: InitOptions): Promise<void> {
     }
   }
 
-  // Create empty vendor cache
-  const vendorCachePath = path.join(cwd, '.r2s', 'vendor-cache.json');
-  if (!(await fileExists(vendorCachePath))) {
-    await fs.writeFile(vendorCachePath, '{}', 'utf-8');
-  }
-
   console.log();
   console.log(chalk.green.bold('receipt2sheet initialized!'));
   console.log();
@@ -114,11 +108,4 @@ export async function initCommand(options: InitOptions): Promise<void> {
   console.log(`  Inbox:    inbox/`);
   console.log();
   console.log(`Drop receipts in ${chalk.cyan('inbox/')} and run ${chalk.cyan('r2s process')}`);
-}
-
-function slugify(str: string): string {
-  return str
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
 }

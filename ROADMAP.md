@@ -20,7 +20,8 @@
 
 ### Security/Privacy
 
-- [ ] redact PII, account numbers, etc... (see PRIVACY.md)
+- [x] Redact PII from text content before API calls (credit cards, SSNs, routing/account numbers)
+- [ ] Image/PDF pixel-level PII redaction (OCR pre-processing)
 
 ### Confidence Scores
 - [ ] Add `confidence` field (0-1) to Claude's parse response

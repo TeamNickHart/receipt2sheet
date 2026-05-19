@@ -37,7 +37,14 @@ receipt2sheet is designed with privacy as a core principle. Your financial data 
 | Your spreadsheet contents | Never leaves your machine |
 | Historical expenses | Never leaves your machine |
 
-> **Planned:** Automatic redaction of credit card numbers, bank accounts, SSNs, and routing numbers before API calls is on the [roadmap](./ROADMAP.md) for a future release. In v0.1.0, receipt text is sent to the Claude API without redaction.
+**Automatic PII Redaction:** Text content extracted from receipts is automatically scrubbed before being sent to the Claude API. The following PII types are detected and redacted:
+
+- **Credit card numbers** — 13-19 digit sequences validated with Luhn checksum, replaced with `[REDACTED-CC-XXXX]` (last 4 preserved)
+- **Social Security Numbers** — `XXX-XX-XXXX` format, replaced with `[REDACTED-SSN]`
+- **Bank routing numbers** — 9-digit numbers preceded by keywords like "routing" or "ABA", replaced with `[REDACTED-ROUTING]`
+- **Bank account numbers** — 6-17 digit numbers preceded by "account" or "acct", replaced with `[REDACTED-ACCT]`
+
+> **Limitation:** Image and PDF vision paths send binary data directly to the Claude API and cannot be text-redacted. If your scanned receipts contain visible PII (e.g., printed credit card numbers), that data will be transmitted as-is. See the [roadmap](./ROADMAP.md) for planned image-level redaction.
 
 ---
 

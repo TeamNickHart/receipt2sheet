@@ -7,19 +7,8 @@ import type {
 } from '@anthropic-ai/sdk/resources/messages.js';
 import { ReceiptParseResultSchema, type ReceiptParseResult } from '../schemas/receipt.js';
 import type { Vendor } from '../schemas/config.js';
-
-const MODEL_ALIASES: Record<string, string> = {
-  small: 'claude-haiku-4-5-20251001',
-  medium: 'claude-sonnet-4-6',
-  large: 'claude-opus-4-6',
-};
-
-const DEFAULT_MODEL = 'medium';
-
-function resolveModel(): string {
-  const env = process.env.R2S_MODEL || DEFAULT_MODEL;
-  return MODEL_ALIASES[env] || env;
-}
+import { redactPII, type RedactionSummary } from '../utils/redact.js';
+import { resolveModel } from './models.js';
 
 const SYSTEM_PROMPT = `You are a receipt parser for rental property expense tracking.
 
@@ -63,6 +52,7 @@ export type ReceiptContent =
 export interface ParseResult {
   parsed: ReceiptParseResult;
   rawResponse: string;
+  redactions?: RedactionSummary;
 }
 
 export async function parseReceipt(
@@ -79,9 +69,12 @@ export async function parseReceipt(
       : '';
 
   let userContent: Array<ContentBlockParam>;
+  let redactions: RedactionSummary | undefined;
 
   if (content.type === 'text') {
-    userContent = [{ type: 'text', text: content.text + vendorHint }];
+    const redacted = redactPII(content.text);
+    redactions = redacted.redactions;
+    userContent = [{ type: 'text', text: redacted.text + vendorHint }];
   } else if (content.type === 'image') {
     userContent = [
       {
@@ -116,10 +109,17 @@ export async function parseReceipt(
   });
 
   const rawResponse = response.content[0].type === 'text' ? response.content[0].text : '';
-  const parsed = JSON.parse(rawResponse);
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(rawResponse);
+  } catch {
+    throw new Error(`Claude returned invalid JSON. Raw response: "${rawResponse.slice(0, 200)}"`);
+  }
 
   return {
     parsed: ReceiptParseResultSchema.parse(parsed),
     rawResponse,
+    redactions,
   };
 }

@@ -1,7 +1,7 @@
 import { select, input } from '@inquirer/prompts';
 import Table from 'cli-table3';
 import chalk from 'chalk';
-import { CategorySchema, type Expense } from '../schemas/expense.js';
+import { CategorySchema, ExpenseSchema, type Expense } from '../schemas/expense.js';
 import { truncate } from '../utils/files.js';
 import { formatDollars } from '../utils/currency.js';
 
@@ -109,17 +109,36 @@ async function editExpenses(expenses: ParsedEntry[]): Promise<ConfirmedEntry[]> 
       default: expense.expenseType,
     });
 
+    const amount = Number(amountStr);
+    if (isNaN(amount)) {
+      console.log(
+        chalk.red(`  Invalid amount "${amountStr}" — keeping original (${expense.amount})`),
+      );
+      results.push({ file, expense, action: 'confirm' });
+      continue;
+    }
+
+    const edited = {
+      ...expense,
+      vendor,
+      date,
+      amount,
+      description,
+      category,
+      expenseType,
+    };
+
+    const validation = ExpenseSchema.safeParse(edited);
+    if (!validation.success) {
+      const issues = validation.error.issues.map((i) => i.message).join('; ');
+      console.log(chalk.red(`  Invalid input: ${issues} — keeping original values`));
+      results.push({ file, expense, action: 'confirm' });
+      continue;
+    }
+
     results.push({
       file,
-      expense: {
-        ...expense,
-        vendor,
-        date,
-        amount: Number(amountStr),
-        description,
-        category,
-        expenseType,
-      },
+      expense: validation.data,
       action: 'confirm',
     });
   }

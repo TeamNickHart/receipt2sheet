@@ -28,6 +28,42 @@ describe('ExpenseSchema', () => {
     ).toThrow();
   });
 
+  it('rejects impossible dates (month 13)', () => {
+    expect(() =>
+      ExpenseSchema.parse({
+        vendor: 'Amazon',
+        date: '2026-13-01',
+        amount: 45.99,
+        description: 'Towels',
+        category: 'Supplies',
+      }),
+    ).toThrow(/Invalid date/);
+  });
+
+  it('rejects impossible dates (day 32)', () => {
+    expect(() =>
+      ExpenseSchema.parse({
+        vendor: 'Amazon',
+        date: '2026-01-32',
+        amount: 45.99,
+        description: 'Towels',
+        category: 'Supplies',
+      }),
+    ).toThrow(/Invalid date/);
+  });
+
+  it('rejects Feb 30', () => {
+    expect(() =>
+      ExpenseSchema.parse({
+        vendor: 'Amazon',
+        date: '2026-02-30',
+        amount: 45.99,
+        description: 'Towels',
+        category: 'Supplies',
+      }),
+    ).toThrow(/Invalid date/);
+  });
+
   it('allows zero amount (agreements without invoiced amount)', () => {
     const result = ExpenseSchema.parse({
       vendor: 'Mountain Valley Electric',

@@ -35,6 +35,15 @@ describe('loadLedger', () => {
     expect(ledger).toEqual({});
   });
 
+  it('throws with actionable message for corrupted ledger', async () => {
+    const ledgerDir = path.join(tmpDir, '.r2s');
+    await fs.mkdir(ledgerDir, { recursive: true });
+    await fs.writeFile(path.join(ledgerDir, 'processed.json'), '{not valid json!!!');
+
+    await expect(loadLedger(tmpDir)).rejects.toThrow(/Corrupted ledger file/);
+    await expect(loadLedger(tmpDir)).rejects.toThrow(/Back up the file/);
+  });
+
   it('loads existing ledger', async () => {
     const ledgerDir = path.join(tmpDir, '.r2s');
     await fs.mkdir(ledgerDir, { recursive: true });

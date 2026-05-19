@@ -7,6 +7,7 @@ import { fileExists, ensureDir } from '../utils/files.js';
 import { currentYear } from '../utils/dates.js';
 import { copyTemplate } from '../core/spreadsheet.js';
 import { fileURLToPath } from 'url';
+import { MODEL_ALIASES, resolveModel } from '../core/models.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -102,12 +103,7 @@ export async function doctorCommand(options: DoctorOptions): Promise<void> {
 
   // 5. Model config
   const modelEnv = process.env.R2S_MODEL || 'medium';
-  const MODEL_ALIASES: Record<string, string> = {
-    small: 'claude-haiku-4-5-20251001',
-    medium: 'claude-sonnet-4-6',
-    large: 'claude-opus-4-6',
-  };
-  const resolvedModel = MODEL_ALIASES[modelEnv] || modelEnv;
+  const resolvedModel = resolveModel();
   checks.push({
     label: 'Model',
     status: 'ok',
