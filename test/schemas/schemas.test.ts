@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { ExpenseSchema, CategorySchema } from '../src/schemas/expense.js';
-import { ConfigSchema } from '../src/schemas/config.js';
-import { ReceiptParseResultSchema } from '../src/schemas/receipt.js';
+import { ExpenseSchema, CategorySchema } from '../../src/schemas/expense.js';
+import { ConfigSchema } from '../../src/schemas/config.js';
+import { ReceiptParseResultSchema } from '../../src/schemas/receipt.js';
 
 describe('ExpenseSchema', () => {
   it('validates a valid expense', () => {
@@ -30,7 +30,7 @@ describe('ExpenseSchema', () => {
 
   it('allows zero amount (agreements without invoiced amount)', () => {
     const result = ExpenseSchema.parse({
-      vendor: 'Peninsula Light',
+      vendor: 'Mountain Valley Electric',
       date: '2026-05-12',
       amount: 0,
       description: 'Service agreement',
