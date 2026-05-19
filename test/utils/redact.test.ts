@@ -116,7 +116,56 @@ describe('redactPII', () => {
     });
   });
 
-  describe('false negatives (things that should NOT be redacted)', () => {
+  describe('credit card edge cases', () => {
+    it('redacts a card with mixed separators', () => {
+      const { text } = redactPII('Card: 4111-1111 1111-1111');
+      expect(text).toBe('Card: [REDACTED-CC-1111]');
+    });
+
+    it('redacts a card at end of string', () => {
+      const { text } = redactPII('Paid with 4111111111111111');
+      expect(text).toBe('Paid with [REDACTED-CC-1111]');
+    });
+
+    it('redacts a card adjacent to non-digit text', () => {
+      const { text } = redactPII('CC:4111111111111111/done');
+      expect(text).toContain('[REDACTED-CC-1111]');
+      expect(text).not.toContain('4111111111111111');
+    });
+
+    it('does not redact when digits are part of a longer number', () => {
+      // 20 digits — too long even though a 16-digit substring might pass Luhn
+      const input = 'Ref: 12345678901234567890';
+      const { text } = redactPII(input);
+      expect(text).toBe(input);
+    });
+  });
+
+  describe('account number boundary lengths', () => {
+    it('redacts a 6-digit account number (minimum)', () => {
+      const { text, redactions } = redactPII('Account: 123456');
+      expect(text).toBe('Account: [REDACTED-ACCT]');
+      expect(redactions.accountNumbers).toBe(1);
+    });
+
+    it('redacts a 17-digit account number (maximum)', () => {
+      const { text, redactions } = redactPII('Account: 12345678901234567');
+      expect(text).toBe('Account: [REDACTED-ACCT]');
+      expect(redactions.accountNumbers).toBe(1);
+    });
+
+    it('does not redact a 5-digit account number (too short)', () => {
+      const input = 'Account: 12345';
+      expect(redactPII(input).text).toBe(input);
+    });
+
+    it('does not redact an 18-digit account number (too long)', () => {
+      const input = 'Account: 123456789012345678';
+      expect(redactPII(input).text).toBe(input);
+    });
+  });
+
+  describe('true negatives (things that should NOT be redacted)', () => {
     it('does not redact dollar amounts', () => {
       const input = '$8,350.73';
       expect(redactPII(input).text).toBe(input);
@@ -205,6 +254,10 @@ Account: 9876543210
       expect(text).toContain('[REDACTED-SSN]');
       expect(text).toContain('[REDACTED-ROUTING]');
       expect(text).toContain('[REDACTED-ACCT]');
+      expect(redactions.creditCards).toBe(1);
+      expect(redactions.ssns).toBe(1);
+      expect(redactions.routingNumbers).toBe(1);
+      expect(redactions.accountNumbers).toBe(1);
       expect(redactions.total).toBe(4);
 
       // Non-PII should be preserved

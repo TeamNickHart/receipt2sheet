@@ -27,8 +27,9 @@ export function luhnCheck(digits: string): boolean {
   return sum % 10 === 0;
 }
 
-// Match 13-19 digit sequences with optional space/dash separators
-const CC_PATTERN = /\b(\d[ -]?){13,19}\b/g;
+// Match runs of digits with optional space/dash separators. Length and Luhn are validated
+// in the callback. Uses digit lookaround instead of \b which misbehaves around spaces/dashes.
+const CC_PATTERN = /(?<!\d)\d(?:[ -]?\d){12,18}(?!\d)/g;
 
 // SSN: exactly 3-2-4 with hyphens
 const SSN_PATTERN = /\b\d{3}-\d{2}-\d{4}\b/g;

@@ -7,7 +7,7 @@ import type {
 } from '@anthropic-ai/sdk/resources/messages.js';
 import { ReceiptParseResultSchema, type ReceiptParseResult } from '../schemas/receipt.js';
 import type { Vendor } from '../schemas/config.js';
-import { redactPII } from '../utils/redact.js';
+import { redactPII, type RedactionSummary } from '../utils/redact.js';
 
 const MODEL_ALIASES: Record<string, string> = {
   small: 'claude-haiku-4-5-20251001',
@@ -64,6 +64,7 @@ export type ReceiptContent =
 export interface ParseResult {
   parsed: ReceiptParseResult;
   rawResponse: string;
+  redactions?: RedactionSummary;
 }
 
 export async function parseReceipt(
@@ -80,10 +81,12 @@ export async function parseReceipt(
       : '';
 
   let userContent: Array<ContentBlockParam>;
+  let redactions: RedactionSummary | undefined;
 
   if (content.type === 'text') {
-    const { text: redactedText } = redactPII(content.text);
-    userContent = [{ type: 'text', text: redactedText + vendorHint }];
+    const redacted = redactPII(content.text);
+    redactions = redacted.redactions;
+    userContent = [{ type: 'text', text: redacted.text + vendorHint }];
   } else if (content.type === 'image') {
     userContent = [
       {
@@ -123,5 +126,6 @@ export async function parseReceipt(
   return {
     parsed: ReceiptParseResultSchema.parse(parsed),
     rawResponse,
+    redactions,
   };
 }
