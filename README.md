@@ -6,7 +6,7 @@
 [![CI](https://github.com/TeamNickHart/receipt2sheet/actions/workflows/ci.yml/badge.svg)](https://github.com/TeamNickHart/receipt2sheet/actions/workflows/ci.yml)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
-> v0.1.0
+> v0.2.0
 
 Turn rental receipts into Schedule E line items using Claude AI.
 
