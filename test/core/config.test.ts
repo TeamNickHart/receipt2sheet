@@ -1,7 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import path from 'path';
 import fs from 'fs/promises';
-import { findConfigPath, loadConfig, saveConfig, resolveSpreadsheetPath } from '../../src/core/config.js';
+import {
+  findConfigPath,
+  loadConfig,
+  saveConfig,
+  resolveSpreadsheetPath,
+  learnVendors,
+} from '../../src/core/config.js';
+import type { Config } from '../../src/schemas/config.js';
 import { createTempDir, cleanupTempDir, writeTempFile } from '../helpers/mock-fs.js';
 
 const VALID_CONFIG_PATH = path.resolve(import.meta.dirname!, '../fixtures/configs/valid-config.yaml');
@@ -85,5 +92,133 @@ describe('resolveSpreadsheetPath', () => {
   it('handles template without {year}', () => {
     const result = resolveSpreadsheetPath('/project', 'spreadsheets/Capital.xlsx', 2026);
     expect(result).toBe(path.join('/project', 'spreadsheets/Capital.xlsx'));
+  });
+});
+
+describe('learnVendors', () => {
+  function makeMinimalConfig(vendors: Config['vendors'] = {}): Config {
+    return {
+      version: 1,
+      properties: [{ id: 'cabin', name: 'Cabin', type: 'short-term-rental' }],
+      default_property: 'cabin',
+      spreadsheets: {
+        operating_expenses: 'spreadsheets/Op_{year}.xlsx',
+        capital_improvements: 'spreadsheets/Cap.xlsx',
+        year_end_summary: 'spreadsheets/YE_{year}.xlsx',
+      },
+      categories: ['Supplies', 'Repairs', 'Utilities'],
+      vendors,
+      inbox: 'inbox/',
+      processed: 'processed/',
+      organize_processed_by: 'year-month',
+      options: {
+        require_confirmation: true,
+        auto_categorize_known_vendors: true,
+        move_processed_receipts: true,
+        backup_spreadsheets: true,
+      },
+    };
+  }
+
+  it('adds a new vendor', () => {
+    const config = makeMinimalConfig();
+    const changed = learnVendors(config, [{ vendor: 'Home Depot', category: 'Supplies' }]);
+
+    expect(changed).toEqual(['Home Depot']);
+    expect(config.vendors!['Home Depot']).toEqual({ category: 'Supplies' });
+  });
+
+  it('adds multiple new vendors', () => {
+    const config = makeMinimalConfig();
+    const changed = learnVendors(config, [
+      { vendor: 'Home Depot', category: 'Supplies' },
+      { vendor: 'Peninsula Light', category: 'Utilities' },
+    ]);
+
+    expect(changed).toHaveLength(2);
+    expect(config.vendors!['Home Depot'].category).toBe('Supplies');
+    expect(config.vendors!['Peninsula Light'].category).toBe('Utilities');
+  });
+
+  it('does not duplicate existing vendors with same category', () => {
+    const config = makeMinimalConfig({ Amazon: { category: 'Supplies' } });
+    const changed = learnVendors(config, [{ vendor: 'Amazon', category: 'Supplies' }]);
+
+    expect(changed).toEqual([]);
+    expect(Object.keys(config.vendors!)).toEqual(['Amazon']);
+  });
+
+  it('updates category when user changed it', () => {
+    const config = makeMinimalConfig({ Amazon: { category: 'Supplies' } });
+    const changed = learnVendors(config, [{ vendor: 'Amazon', category: 'Repairs' }]);
+
+    expect(changed).toEqual(['Amazon']);
+    expect(config.vendors!['Amazon'].category).toBe('Repairs');
+  });
+
+  it('recognizes existing vendor by alias', () => {
+    const config = makeMinimalConfig({
+      Amazon: { category: 'Supplies', aliases: ['AMAZON.COM', 'AMZN'] },
+    });
+    const changed = learnVendors(config, [{ vendor: 'AMAZON.COM', category: 'Supplies' }]);
+
+    expect(changed).toEqual([]);
+  });
+
+  it('updates category via alias match', () => {
+    const config = makeMinimalConfig({
+      Amazon: { category: 'Supplies', aliases: ['AMAZON.COM'] },
+    });
+    const changed = learnVendors(config, [{ vendor: 'AMAZON.COM', category: 'Repairs' }]);
+
+    expect(changed).toEqual(['Amazon']);
+    expect(config.vendors!['Amazon'].category).toBe('Repairs');
+  });
+
+  it('matches vendor names case-insensitively', () => {
+    const config = makeMinimalConfig({ 'Home Depot': { category: 'Supplies' } });
+    const changed = learnVendors(config, [{ vendor: 'home depot', category: 'Supplies' }]);
+
+    expect(changed).toEqual([]);
+  });
+
+  it('updates category on case-insensitive match', () => {
+    const config = makeMinimalConfig({ 'Home Depot': { category: 'Supplies' } });
+    const changed = learnVendors(config, [{ vendor: 'home depot', category: 'Repairs' }]);
+
+    expect(changed).toEqual(['Home Depot']);
+    expect(config.vendors!['Home Depot'].category).toBe('Repairs');
+  });
+
+  it('skips entries with empty vendor or category', () => {
+    const config = makeMinimalConfig();
+    const changed = learnVendors(config, [
+      { vendor: '', category: 'Supplies' },
+      { vendor: 'Amazon', category: '' },
+    ]);
+
+    expect(changed).toEqual([]);
+    expect(Object.keys(config.vendors!)).toHaveLength(0);
+  });
+
+  it('deduplicates same vendor appearing multiple times', () => {
+    const config = makeMinimalConfig();
+    const changed = learnVendors(config, [
+      { vendor: 'Amazon', category: 'Supplies' },
+      { vendor: 'Amazon', category: 'Supplies' },
+    ]);
+
+    // First one adds, second one is a no-op
+    expect(changed).toEqual(['Amazon']);
+  });
+
+  it('preserves existing aliases when updating category', () => {
+    const config = makeMinimalConfig({
+      Amazon: { category: 'Supplies', aliases: ['AMZN', 'AMAZON.COM'] },
+    });
+    learnVendors(config, [{ vendor: 'Amazon', category: 'Repairs' }]);
+
+    expect(config.vendors!['Amazon'].aliases).toEqual(['AMZN', 'AMAZON.COM']);
+    expect(config.vendors!['Amazon'].category).toBe('Repairs');
   });
 });
