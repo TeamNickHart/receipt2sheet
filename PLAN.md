@@ -59,7 +59,7 @@ CabinRental/
 │   ├── Capital_Improvements.xlsx
 │   └── Year_End_Summary.xlsx
 └── .r2s/
-    └── vendor-cache.json         # Learned vendor → category mappings
+    └── processed.json            # Processing ledger
 ```
 
 ## Configuration

@@ -2,6 +2,14 @@
 
 ## Completed
 
+### v0.2.0 — Hardening & Privacy
+- [x] PII redaction — auto-scrub credit cards, SSNs, routing/account numbers before API calls
+- [x] Edit mode input validation (Zod)
+- [x] Atomic ledger writes
+- [x] Actionable error messages with phase context
+- [x] Date validation (rejects impossible dates)
+- [x] Property flag validation
+
 ### Phase 1: MVP (v0.1.0)
 - [x] `init` command — creates config, directories, spreadsheet templates
 - [x] `process` command — parse receipts, confirm, update spreadsheets
@@ -36,7 +44,7 @@
 - [ ] `status` command — show expense summary by category/property
 - [ ] `add` command — manual expense entry
 - [ ] Processed receipt organization improvements
-- [ ] Better error messages and recovery guidance
+- [x] Better error messages and recovery guidance
 
 ### Phase 3: Multi-Property & Year-End
 - [ ] Multi-property support in process flow
@@ -75,20 +83,20 @@ Use git as a built-in versioning/backup layer for the user's rental data folder.
 ## Infrastructure
 
 ### CI/CD
-- [ ] GitHub Actions workflow for validate (typecheck, lint, format, build, test)
+- [x] GitHub Actions workflow for validate (typecheck, lint, format, build, test)
 - [ ] Automated release workflow (tag → build → publish)
 - [ ] PR checks with status reporting
 
 ### Testing
-- [ ] Generate simulated receipts/invoices as test fixtures
-- [ ] Integration tests for the full process flow (mock Claude API)
-- [ ] Unit tests for spreadsheet read/write
-- [ ] Unit tests for config loading and validation
-- [ ] Test coverage reporting
+- [x] Generate simulated receipts/invoices as test fixtures
+- [x] Integration tests for the full process flow (mock Claude API)
+- [x] Unit tests for spreadsheet read/write
+- [x] Unit tests for config loading and validation
+- [x] Test coverage reporting
 
 ### Publishing
 - [ ] Publish to npmjs.com as `receipt2sheet`
-- [ ] GitHub Releases with changelogs
+- [x] GitHub Releases with changelogs
 - [ ] Homebrew formula (stretch)
 
 ### Documentation

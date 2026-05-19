@@ -26,7 +26,7 @@ receipt2sheet is designed with privacy as a core principle. Your financial data 
 
 | Data | Purpose |
 |------|---------|
-| Receipt text | Extracted from PDFs, sent as-is for parsing |
+| Receipt text | Extracted from PDFs, PII-redacted, then sent for parsing |
 | Scanned PDFs | Sent as native PDF documents when text extraction fails |
 | Receipt images | PNG/JPG/WebP files sent via vision API |
 

@@ -27,9 +27,9 @@ pnpm format:check      # check formatting
 ```
 src/
   commands/     CLI command handlers (init, process, doctor)
-  core/         Business logic (config, extract, parse, spreadsheet, ledger, confirm)
+  core/         Business logic (config, extract, models, parse, redact, spreadsheet, ledger, confirm)
   schemas/      Zod schemas (config, receipt, expense)
-  utils/        Pure utilities (currency, dates, files)
+  utils/        Pure utilities (currency, dates, files, redact)
   index.ts      CLI entry point
 ```
 
@@ -42,6 +42,11 @@ Flow: `commands/` -> `core/` -> `schemas/` -> `utils/`
 - `templates/` contains canonical xlsx spreadsheet templates — don't modify without intent
 - Amounts are non-negative numbers; dates are `YYYY-MM-DD` strings
 
+## Scripts
+- `scripts/generate-fixtures.ts` — generates test PDF/image fixtures
+- `scripts/record-api-responses.ts` — records real API responses (requires ANTHROPIC_API_KEY)
+- `scripts/preview-redaction.ts` — preview PII redaction on a file without processing
+
 ## Testing Patterns
 - `vi.mock('@anthropic-ai/sdk')` for Claude API calls
 - Use `test/helpers/mock-fs.ts` for temp directories (create in `beforeEach`, clean in `afterEach`)
@@ -49,6 +54,7 @@ Flow: `commands/` -> `core/` -> `schemas/` -> `utils/`
 - Use generated fixture receipts from `test/fixtures/receipts/`
 - Spreadsheet tests: copy real templates to temp dirs, verify with ExcelJS
 - Extract tests: use actual fixture PDFs (no mocking needed)
+- PII redaction tests: use `test/fixtures/receipts/pii-*` fixtures with embedded sensitive data
 
 ## Commit Conventions
 - Focus on the "why" not the "what"
