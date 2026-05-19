@@ -18,6 +18,10 @@
 
 ## Next Up
 
+### Security/Privacy
+
+- [ ] redact PII, account numbers, etc... (see PRIVACY.md)
+
 ### Confidence Scores
 - [ ] Add `confidence` field (0-1) to Claude's parse response
 - [ ] Configure a confidence threshold in `.env.local` (default: 0.8)
