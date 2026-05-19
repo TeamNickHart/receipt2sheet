@@ -23,6 +23,18 @@ export async function processCommand(files: string[], options: ProcessOptions): 
   const { config, configDir } = await loadConfig();
   const ledger = await loadLedger(configDir);
 
+  // Validate --property flag
+  if (options.property) {
+    const knownIds = config.properties.map((p) => p.id);
+    if (!knownIds.includes(options.property)) {
+      console.log(
+        chalk.yellow(
+          `Warning: property "${options.property}" not found in config. Known properties: ${knownIds.join(', ')}`,
+        ),
+      );
+    }
+  }
+
   // Determine which files to process
   let filesToProcess: string[];
   if (files.length > 0) {
@@ -71,6 +83,7 @@ export async function processCommand(files: string[], options: ProcessOptions): 
     const filename = path.basename(filePath);
     process.stdout.write(chalk.dim(`  Parsing ${filename}... `));
 
+    let phase = 'reading file';
     try {
       // Check file size
       const stats = await fs.stat(filePath);
@@ -86,23 +99,29 @@ export async function processCommand(files: string[], options: ProcessOptions): 
 
       if (['.png', '.jpg', '.jpeg', '.webp'].includes(ext)) {
         // Use vision for image files
+        phase = 'reading image';
         const base64 = await readFileAsBase64(filePath);
         const mediaType = getMediaType(filePath);
+        phase = 'calling Claude API';
         parseResult = await parseReceipt(
           { type: 'image', data: base64, mediaType },
           config.vendors || {},
         );
       } else if (ext === '.pdf') {
         // Try text extraction first; fall back to sending PDF as document
+        phase = 'extracting text';
         const extraction = await extractText(filePath);
         if (extraction.text && !extraction.needsVision) {
+          phase = 'calling Claude API';
           parseResult = await parseReceipt(
             { type: 'text', text: extraction.text },
             config.vendors || {},
           );
         } else {
           // Send PDF directly to Claude as a document
+          phase = 'reading PDF';
           const base64 = await readFileAsBase64(filePath);
+          phase = 'calling Claude API';
           parseResult = await parseReceipt(
             { type: 'document', data: base64, mediaType: 'application/pdf' },
             config.vendors || {},
@@ -134,7 +153,7 @@ export async function processCommand(files: string[], options: ProcessOptions): 
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      errors.push({ file: filename, error: message });
+      errors.push({ file: filename, error: `[${phase}] ${message}` });
       console.log(chalk.red('failed'));
     }
   }
@@ -349,6 +368,15 @@ const DEFAULT_MAX_FILE_SIZE_MB = 10;
 
 function getMaxFileSizeBytes(): number {
   const envVal = process.env.R2S_MAX_FILE_SIZE_MB;
-  const mb = envVal ? parseInt(envVal, 10) : DEFAULT_MAX_FILE_SIZE_MB;
-  return (isNaN(mb) ? DEFAULT_MAX_FILE_SIZE_MB : mb) * 1024 * 1024;
+  if (!envVal) return DEFAULT_MAX_FILE_SIZE_MB * 1024 * 1024;
+  const mb = parseInt(envVal, 10);
+  if (isNaN(mb) || mb <= 0) {
+    console.log(
+      chalk.yellow(
+        `Warning: invalid R2S_MAX_FILE_SIZE_MB="${envVal}", using default (${DEFAULT_MAX_FILE_SIZE_MB} MB)`,
+      ),
+    );
+    return DEFAULT_MAX_FILE_SIZE_MB * 1024 * 1024;
+  }
+  return mb * 1024 * 1024;
 }

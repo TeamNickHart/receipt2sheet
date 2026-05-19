@@ -84,12 +84,14 @@ describe('parseReceipt', () => {
     expect(textContent).toContain('Home Depot: Repairs');
   });
 
-  it('throws on invalid JSON response', async () => {
+  it('throws with helpful message on invalid JSON response', async () => {
     mockCreate.mockResolvedValueOnce({
-      content: [{ type: 'text', text: 'not json' }],
+      content: [{ type: 'text', text: 'Sorry, I cannot process this.' }],
     });
 
-    await expect(parseReceipt({ type: 'text', text: 'test' }, {})).rejects.toThrow();
+    await expect(parseReceipt({ type: 'text', text: 'test' }, {})).rejects.toThrow(
+      /Claude returned invalid JSON.*Sorry, I cannot process this/,
+    );
   });
 
   it('redacts credit card numbers from text before API call', async () => {

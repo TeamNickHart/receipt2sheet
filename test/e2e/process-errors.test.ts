@@ -102,6 +102,46 @@ describe('process error handling', () => {
     expect(output).toContain('failed to parse');
   });
 
+  it('includes phase context in error messages', async () => {
+    const srcPdf = path.join(FIXTURES_DIR, 'receipts/service-invoice-landscaping.pdf');
+    const inboxPdf = path.join(tmpDir, 'inbox', 'landscaping.pdf');
+    await fs.copyFile(srcPdf, inboxPdf);
+
+    mockCreate.mockRejectedValueOnce(new Error('connection timeout'));
+
+    await processCommand([], { yes: true });
+
+    const output = consoleSpy.mock.calls.map((c) => c[0]).join('\n');
+    expect(output).toContain('[calling Claude API]');
+    expect(output).toContain('connection timeout');
+  });
+
+  it('warns on unknown --property flag', async () => {
+    const srcPdf = path.join(FIXTURES_DIR, 'receipts/service-invoice-landscaping.pdf');
+    const inboxPdf = path.join(tmpDir, 'inbox', 'landscaping.pdf');
+    await fs.copyFile(srcPdf, inboxPdf);
+
+    mockCreate.mockResolvedValueOnce({
+      content: [{
+        type: 'text',
+        text: JSON.stringify({
+          vendor: 'Test',
+          date: '2026-04-05',
+          amount: 100,
+          description: 'Test',
+          category: 'Repairs',
+          expense_type: 'operating',
+        }),
+      }],
+    });
+
+    await processCommand([], { yes: true, property: 'nonexistent' });
+
+    const output = consoleSpy.mock.calls.map((c) => c[0]).join('\n');
+    expect(output).toContain('not found in config');
+    expect(output).toContain('cabin');
+  });
+
   it('--force reprocesses already-processed files', async () => {
     const srcPdf = path.join(FIXTURES_DIR, 'receipts/service-invoice-landscaping.pdf');
     const inboxPdf = path.join(tmpDir, 'inbox', 'landscaping.pdf');
