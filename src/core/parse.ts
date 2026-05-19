@@ -8,19 +8,7 @@ import type {
 import { ReceiptParseResultSchema, type ReceiptParseResult } from '../schemas/receipt.js';
 import type { Vendor } from '../schemas/config.js';
 import { redactPII, type RedactionSummary } from '../utils/redact.js';
-
-const MODEL_ALIASES: Record<string, string> = {
-  small: 'claude-haiku-4-5-20251001',
-  medium: 'claude-sonnet-4-6',
-  large: 'claude-opus-4-6',
-};
-
-const DEFAULT_MODEL = 'medium';
-
-function resolveModel(): string {
-  const env = process.env.R2S_MODEL || DEFAULT_MODEL;
-  return MODEL_ALIASES[env] || env;
-}
+import { resolveModel } from './models.js';
 
 const SYSTEM_PROMPT = `You are a receipt parser for rental property expense tracking.
 
@@ -121,7 +109,13 @@ export async function parseReceipt(
   });
 
   const rawResponse = response.content[0].type === 'text' ? response.content[0].text : '';
-  const parsed = JSON.parse(rawResponse);
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(rawResponse);
+  } catch {
+    throw new Error(`Claude returned invalid JSON. Raw response: "${rawResponse.slice(0, 200)}"`);
+  }
 
   return {
     parsed: ReceiptParseResultSchema.parse(parsed),

@@ -7,7 +7,7 @@ import { parseReceipt, type ParseResult } from '../core/parse.js';
 import { appendExpense, backupSpreadsheet } from '../core/spreadsheet.js';
 import { confirmExpenses, type ParsedEntry } from '../core/confirm.js';
 import { loadLedger, saveLedger, isAlreadyProcessed } from '../core/ledger.js';
-import { listInboxFiles, isSupportedFile, ensureDir } from '../utils/files.js';
+import { listInboxFiles, isSupportedFile, ensureDir, slugify } from '../utils/files.js';
 import { currentYear as getCurrentYear, currentYearMonth } from '../utils/dates.js';
 import type { Expense } from '../schemas/expense.js';
 
@@ -282,7 +282,8 @@ export async function processCommand(files: string[], options: ProcessOptions): 
     const processedBase = path.resolve(configDir, config.processed);
 
     for (const entry of toProcess) {
-      const srcPath = entry.expense.receiptPath!;
+      const srcPath = entry.expense.receiptPath;
+      if (!srcPath) continue;
       let destDir: string;
 
       if (config.organize_processed_by === 'year-month') {
@@ -319,7 +320,8 @@ export async function processCommand(files: string[], options: ProcessOptions): 
 
   // Record skipped files in ledger too
   for (const entry of skipped) {
-    const srcPath = entry.expense.receiptPath!;
+    const srcPath = entry.expense.receiptPath;
+    if (!srcPath) continue;
     ledger[srcPath] = {
       processedAt: new Date().toISOString(),
       movedTo: null,
@@ -349,11 +351,4 @@ function getMaxFileSizeBytes(): number {
   const envVal = process.env.R2S_MAX_FILE_SIZE_MB;
   const mb = envVal ? parseInt(envVal, 10) : DEFAULT_MAX_FILE_SIZE_MB;
   return (isNaN(mb) ? DEFAULT_MAX_FILE_SIZE_MB : mb) * 1024 * 1024;
-}
-
-function slugify(str: string): string {
-  return str
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
 }

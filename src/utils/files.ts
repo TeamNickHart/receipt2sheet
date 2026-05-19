@@ -26,6 +26,13 @@ export function isSupportedFile(filePath: string): boolean {
   return SUPPORTED_EXTENSIONS.includes(ext);
 }
 
+export function slugify(str: string): string {
+  return str
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
 export async function listInboxFiles(inboxPath: string): Promise<string[]> {
   try {
     const entries = await fs.readdir(inboxPath);
