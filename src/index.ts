@@ -6,6 +6,7 @@ import { Command } from 'commander';
 import { initCommand } from './commands/init.js';
 import { processCommand } from './commands/process.js';
 import { doctorCommand } from './commands/doctor.js';
+import { statusCommand } from './commands/status.js';
 import { VERSION } from './version.js';
 
 const program = new Command();
@@ -54,6 +55,20 @@ program
   .action(async (options) => {
     try {
       await doctorCommand(options);
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : err);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('status')
+  .description('Show expense summary by category for the current year')
+  .option('--year <year>', 'Tax year to show', parseInt)
+  .option('--property <property>', 'Which property to show')
+  .action(async (options) => {
+    try {
+      await statusCommand(options);
     } catch (err) {
       console.error(err instanceof Error ? err.message : err);
       process.exit(1);
