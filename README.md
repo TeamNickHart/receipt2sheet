@@ -3,6 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Node](https://img.shields.io/badge/Node-20+-green?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![CI](https://github.com/TeamNickHart/receipt2sheet/actions/workflows/ci.yml/badge.svg)](https://github.com/TeamNickHart/receipt2sheet/actions/workflows/ci.yml)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 
 > v0.1.0
@@ -183,6 +184,17 @@ Claude API usage is minimal:
 - ~$0.01–0.05 per receipt (text extraction)
 - ~$0.05–0.15 per receipt (PDF document or image vision)
 - Typical month: **$1–3** for 50 receipts
+
+## Development
+
+```bash
+pnpm install              # install dependencies
+pnpm validate             # typecheck + format + lint + build + test
+pnpm test                 # run tests
+pnpm test:watch           # run tests in watch mode
+pnpm test:coverage        # run tests with coverage report
+pnpm fixtures:generate    # regenerate test fixture PDFs
+```
 
 ## Contributing
 

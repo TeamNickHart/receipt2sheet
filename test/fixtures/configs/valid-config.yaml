@@ -1,0 +1,49 @@
+version: 1
+
+properties:
+  - id: cabin
+    name: "Lake Cabin"
+    location: "Lake Tahoe, CA"
+    type: short-term-rental
+    placed_in_service: "2026-01"
+
+default_property: cabin
+
+spreadsheets:
+  operating_expenses: "spreadsheets/Operating_Expenses_{year}.xlsx"
+  capital_improvements: "spreadsheets/Capital_Improvements.xlsx"
+  year_end_summary: "spreadsheets/Year_End_Summary_{year}.xlsx"
+
+categories:
+  - Advertising
+  - Auto and travel
+  - Cleaning and maintenance
+  - Commissions
+  - Insurance
+  - Legal and professional fees
+  - Management fees
+  - Mortgage interest
+  - Other interest
+  - Repairs
+  - Supplies
+  - Taxes
+  - Utilities
+  - Depreciation
+  - Other
+
+vendors:
+  Amazon:
+    category: Supplies
+    aliases: ["AMAZON.COM", "AMZN"]
+  "Evergreen Hardware & Home":
+    category: Supplies
+
+inbox: "inbox/"
+processed: "processed/"
+organize_processed_by: "year-month"
+
+options:
+  require_confirmation: true
+  auto_categorize_known_vendors: true
+  move_processed_receipts: true
+  backup_spreadsheets: true

@@ -1,0 +1,15 @@
+properties:
+  - id: rental
+    name: "My Rental"
+    type: long-term-rental
+
+default_property: rental
+
+spreadsheets:
+  operating_expenses: "spreadsheets/Operating_Expenses_{year}.xlsx"
+  capital_improvements: "spreadsheets/Capital_Improvements.xlsx"
+  year_end_summary: "spreadsheets/Year_End_Summary_{year}.xlsx"
+
+categories:
+  - Supplies
+  - Repairs
