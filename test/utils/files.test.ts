@@ -159,6 +159,29 @@ describe('listInboxFiles', () => {
     expect(path.basename(files[1])).toBe('b.pdf');
   });
 
+  it('finds files in subdirectories', async () => {
+    await fs.mkdir(path.join(tmpDir, 'amazon'), { recursive: true });
+    await fs.mkdir(path.join(tmpDir, 'costco'), { recursive: true });
+    await fs.writeFile(path.join(tmpDir, 'top.pdf'), 'fake');
+    await fs.writeFile(path.join(tmpDir, 'amazon', 'order.pdf'), 'fake');
+    await fs.writeFile(path.join(tmpDir, 'costco', 'receipt.jpg'), 'fake');
+    await fs.writeFile(path.join(tmpDir, 'costco', 'notes.txt'), 'fake');
+
+    const files = await listInboxFiles(tmpDir);
+    expect(files).toHaveLength(3);
+    expect(files.some((f) => f.includes('amazon/order.pdf'))).toBe(true);
+    expect(files.some((f) => f.includes('costco/receipt.jpg'))).toBe(true);
+  });
+
+  it('skips symlinks', async () => {
+    await fs.writeFile(path.join(tmpDir, 'real.pdf'), 'fake');
+    await fs.symlink(path.join(tmpDir, 'real.pdf'), path.join(tmpDir, 'link.pdf'));
+
+    const files = await listInboxFiles(tmpDir);
+    expect(files).toHaveLength(1);
+    expect(files[0]).toContain('real.pdf');
+  });
+
   it('returns empty array for non-existent directory', async () => {
     const files = await listInboxFiles(path.join(tmpDir, 'nonexistent'));
     expect(files).toEqual([]);

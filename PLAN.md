@@ -756,6 +756,14 @@ Tax filing helper:
 - [ ] Tax summary PDF export
 - [ ] Watch mode (auto-process inbox)
 - [ ] Integration with stay tracking tools
+- [ ] Git integration — vault as a git repo
+  - `r2s init`: create/update `.gitignore` (`.env`, `.env.*`, `inbox/`)
+  - `r2s doctor`: check `.gitignore` covers secrets
+  - `r2s process`: auto-commit successful imports (config option `auto_commit`)
+  - Commit message summarizes batch: `r2s: 3 receipts (Amazon, Home Depot, Costco)`
+  - Partial success: commit what worked, user re-runs for failures
+  - `--no-commit` flag to skip for a single run
+  - Open question: should `r2s init` also `git init`?
 
 ## Open Source Considerations
 

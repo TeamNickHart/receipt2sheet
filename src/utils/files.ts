@@ -67,10 +67,10 @@ export async function uniquePath(filePath: string): Promise<string> {
 
 export async function listInboxFiles(inboxPath: string): Promise<string[]> {
   try {
-    const entries = await fs.readdir(inboxPath);
+    const entries = await fs.readdir(inboxPath, { recursive: true, withFileTypes: true });
     return entries
-      .filter(isSupportedFile)
-      .map((f) => path.join(inboxPath, f))
+      .filter((e) => e.isFile() && isSupportedFile(e.name))
+      .map((e) => path.join(e.parentPath, e.name))
       .sort();
   } catch {
     return [];

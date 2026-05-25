@@ -61,7 +61,6 @@ vendors:
 # Receipt organization
 inbox: "inbox/"
 processed: "processed/"
-organize_processed_by: "year-month"  # year-month | vendor | flat
 
 # Processing options
 options:
