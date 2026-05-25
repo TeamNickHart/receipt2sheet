@@ -7,8 +7,14 @@ import { parseReceipt, type ParseResult } from '../core/parse.js';
 import { appendExpense, backupSpreadsheet } from '../core/spreadsheet.js';
 import { confirmExpenses, type ParsedEntry } from '../core/confirm.js';
 import { loadLedger, saveLedger, isAlreadyProcessed } from '../core/ledger.js';
-import { listInboxFiles, isSupportedFile, ensureDir, slugify } from '../utils/files.js';
-import { currentYear as getCurrentYear, currentYearMonth } from '../utils/dates.js';
+import {
+  listInboxFiles,
+  isSupportedFile,
+  ensureDir,
+  receiptFilename,
+  uniquePath,
+} from '../utils/files.js';
+import { currentYear as getCurrentYear } from '../utils/dates.js';
 import type { Expense } from '../schemas/expense.js';
 
 interface ProcessOptions {
@@ -303,18 +309,16 @@ export async function processCommand(files: string[], options: ProcessOptions): 
     for (const entry of toProcess) {
       const srcPath = entry.expense.receiptPath;
       if (!srcPath) continue;
-      let destDir: string;
 
-      if (config.organize_processed_by === 'year-month') {
-        destDir = path.join(processedBase, currentYearMonth());
-      } else if (config.organize_processed_by === 'vendor') {
-        destDir = path.join(processedBase, slugify(entry.expense.vendor));
-      } else {
-        destDir = processedBase;
-      }
-
-      await ensureDir(destDir);
-      const destPath = path.join(destDir, path.basename(srcPath));
+      await ensureDir(processedBase);
+      const ext = path.extname(srcPath);
+      const newName = receiptFilename(
+        entry.expense.vendor,
+        entry.expense.date,
+        entry.expense.amount,
+        ext,
+      );
+      const destPath = await uniquePath(path.join(processedBase, newName));
       await fs.rename(srcPath, destPath);
 
       // Record in ledger

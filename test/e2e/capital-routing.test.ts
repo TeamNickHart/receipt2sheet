@@ -43,7 +43,6 @@ categories:
   - Other
 inbox: "inbox/"
 processed: "processed/"
-organize_processed_by: flat
 options:
   require_confirmation: true
   auto_categorize_known_vendors: true

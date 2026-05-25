@@ -110,7 +110,6 @@ describe('learnVendors', () => {
       vendors,
       inbox: 'inbox/',
       processed: 'processed/',
-      organize_processed_by: 'year-month',
       options: {
         require_confirmation: true,
         auto_categorize_known_vendors: true,

@@ -33,6 +33,38 @@ export function slugify(str: string): string {
     .replace(/^-|-$/g, '');
 }
 
+/**
+ * Build a descriptive filename for a processed receipt.
+ * Format: {vendor}_{date}_{amount}.{ext}
+ * e.g. "home-depot_2026-05-20_43.pdf"
+ */
+export function receiptFilename(vendor: string, date: string, amount: number, ext: string): string {
+  const slug = slugify(vendor);
+  const rounded = Math.round(amount);
+  const extension = ext.startsWith('.') ? ext.slice(1) : ext;
+  return `${slug}_${date}_${rounded}.${extension}`;
+}
+
+/**
+ * Find a unique path, appending -2, -3, etc. if the file already exists.
+ */
+export async function uniquePath(filePath: string): Promise<string> {
+  if (!(await fileExists(filePath))) return filePath;
+
+  const dir = path.dirname(filePath);
+  const ext = path.extname(filePath);
+  const base = path.basename(filePath, ext);
+
+  let n = 2;
+  let candidate: string;
+  do {
+    candidate = path.join(dir, `${base}-${n}${ext}`);
+    n++;
+  } while (await fileExists(candidate));
+
+  return candidate;
+}
+
 export async function listInboxFiles(inboxPath: string): Promise<string[]> {
   try {
     const entries = await fs.readdir(inboxPath);

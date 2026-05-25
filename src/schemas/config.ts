@@ -26,7 +26,8 @@ export const ConfigSchema = z.object({
   vendors: z.record(z.string(), VendorSchema).optional().default({}),
   inbox: z.string().default('inbox/'),
   processed: z.string().default('processed/'),
-  organize_processed_by: z.enum(['year-month', 'vendor', 'flat']).default('year-month'),
+  /** @deprecated — receipts are now always renamed to {vendor}_{date}_{amount}.{ext} */
+  organize_processed_by: z.enum(['year-month', 'vendor', 'flat']).optional(),
   options: z
     .object({
       require_confirmation: z.boolean().default(true),

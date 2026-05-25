@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import path from 'path';
 import fs from 'fs/promises';
-import { ensureDir, fileExists, truncate, isSupportedFile, listInboxFiles } from '../../src/utils/files.js';
+import { ensureDir, fileExists, truncate, isSupportedFile, listInboxFiles, receiptFilename, uniquePath } from '../../src/utils/files.js';
 import { createTempDir, cleanupTempDir } from '../helpers/mock-fs.js';
 
 let tmpDir: string;
@@ -77,6 +77,64 @@ describe('isSupportedFile', () => {
   it('is case-insensitive', () => {
     expect(isSupportedFile('receipt.PDF')).toBe(true);
     expect(isSupportedFile('photo.JPG')).toBe(true);
+  });
+});
+
+describe('receiptFilename', () => {
+  it('builds vendor_date_amount.ext', () => {
+    expect(receiptFilename('Home Depot', '2026-05-20', 42.99, '.pdf')).toBe(
+      'home-depot_2026-05-20_43.pdf',
+    );
+  });
+
+  it('rounds to nearest dollar', () => {
+    expect(receiptFilename('Amazon', '2026-01-05', 89.49, '.png')).toBe(
+      'amazon_2026-01-05_89.png',
+    );
+    expect(receiptFilename('Amazon', '2026-01-05', 89.50, '.png')).toBe(
+      'amazon_2026-01-05_90.png',
+    );
+  });
+
+  it('handles zero amount', () => {
+    expect(receiptFilename('Costco', '2026-03-15', 0, '.jpg')).toBe(
+      'costco_2026-03-15_0.jpg',
+    );
+  });
+
+  it('handles ext with or without leading dot', () => {
+    expect(receiptFilename('Ikea', '2026-06-01', 250, '.pdf')).toBe(
+      'ikea_2026-06-01_250.pdf',
+    );
+    expect(receiptFilename('Ikea', '2026-06-01', 250, 'pdf')).toBe(
+      'ikea_2026-06-01_250.pdf',
+    );
+  });
+
+  it('slugifies vendor names with special characters', () => {
+    expect(receiptFilename("Lowe's", '2026-02-14', 33, '.pdf')).toBe(
+      'lowe-s_2026-02-14_33.pdf',
+    );
+  });
+});
+
+describe('uniquePath', () => {
+  it('returns the path as-is when no collision', async () => {
+    const filePath = path.join(tmpDir, 'receipt.pdf');
+    expect(await uniquePath(filePath)).toBe(filePath);
+  });
+
+  it('appends -2 on first collision', async () => {
+    const filePath = path.join(tmpDir, 'receipt.pdf');
+    await fs.writeFile(filePath, 'exists');
+    expect(await uniquePath(filePath)).toBe(path.join(tmpDir, 'receipt-2.pdf'));
+  });
+
+  it('appends -3 when -2 also exists', async () => {
+    const filePath = path.join(tmpDir, 'receipt.pdf');
+    await fs.writeFile(filePath, 'exists');
+    await fs.writeFile(path.join(tmpDir, 'receipt-2.pdf'), 'exists');
+    expect(await uniquePath(filePath)).toBe(path.join(tmpDir, 'receipt-3.pdf'));
   });
 });
 

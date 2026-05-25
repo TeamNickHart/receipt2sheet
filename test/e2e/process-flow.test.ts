@@ -47,7 +47,6 @@ categories:
   - Other
 inbox: "inbox/"
 processed: "processed/"
-organize_processed_by: flat
 options:
   require_confirmation: true
   auto_categorize_known_vendors: true
@@ -122,8 +121,8 @@ describe('process flow', () => {
     expect(sheet.getCell(6, 3).value).toBe('Ridgeline Landscaping');
     expect(sheet.getCell(6, 5).value).toBe(259.44);
 
-    // Verify receipt moved to processed/
-    const movedFile = path.join(tmpDir, 'processed', 'landscaping.pdf');
+    // Verify receipt moved to processed/ with descriptive filename
+    const movedFile = path.join(tmpDir, 'processed', 'ridgeline-landscaping_2026-04-05_259.pdf');
     expect(await fs.stat(movedFile).then(() => true).catch(() => false)).toBe(true);
 
     // Verify ledger updated
