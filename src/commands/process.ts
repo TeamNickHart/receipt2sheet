@@ -239,6 +239,24 @@ export async function processCommand(files: string[], options: ProcessOptions): 
     return;
   }
 
+  // Pre-compute descriptive filenames for the receipt path column in spreadsheets
+  const sourcePathMap = new Map<string, string>();
+  if (config.options.move_processed_receipts) {
+    for (const entry of toProcess) {
+      const srcPath = entry.expense.receiptPath;
+      if (!srcPath) continue;
+      sourcePathMap.set(entry.file, srcPath);
+      const ext = path.extname(srcPath);
+      const newName = receiptFilename(
+        entry.expense.vendor,
+        entry.expense.date,
+        entry.expense.amount,
+        ext,
+      );
+      entry.expense.receiptPath = newName;
+    }
+  }
+
   // Split into operating vs capital expenses
   const operatingExpenses = toProcess.filter((e) => e.expense.expenseType !== 'capital');
   const capitalExpenses = toProcess.filter((e) => e.expense.expenseType === 'capital');
@@ -307,19 +325,15 @@ export async function processCommand(files: string[], options: ProcessOptions): 
     const processedBase = path.resolve(configDir, config.processed);
 
     for (const entry of toProcess) {
-      const srcPath = entry.expense.receiptPath;
+      const srcPath = sourcePathMap.get(entry.file);
       if (!srcPath) continue;
 
       await ensureDir(processedBase);
-      const ext = path.extname(srcPath);
-      const newName = receiptFilename(
-        entry.expense.vendor,
-        entry.expense.date,
-        entry.expense.amount,
-        ext,
-      );
-      const destPath = await uniquePath(path.join(processedBase, newName));
+      const destPath = await uniquePath(path.join(processedBase, entry.expense.receiptPath!));
       await fs.rename(srcPath, destPath);
+
+      // Update receiptPath to the actual final filename (may have -2 suffix)
+      entry.expense.receiptPath = path.basename(destPath);
 
       // Record in ledger
       ledger[srcPath] = {
